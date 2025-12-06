@@ -3,8 +3,16 @@ let users = [];
 let logs = [];
 let currentUser = null;
 let userToChangePwd = null;
+const loginSection = document.getElementById('login-section');
 
 document.addEventListener('DOMContentLoaded', function () {
+    if (window.location.pathname.includes('portal.html')) {
+        const sessionUser = sessionStorage.getItem('sms_user');
+        if (!sessionUser) {
+            window.location.href = 'login.html';
+            return;
+        }
+    }
     const dateElem = document.getElementById('current-date');
     if (dateElem) {
         dateElem.innerText = new Date().toLocaleDateString('en-US', {
@@ -26,10 +34,22 @@ function loadData() {
     const sData = localStorage.getItem('sms_students');
     const uData = localStorage.getItem('sms_users');
     const lData = localStorage.getItem('sms_logs');
+
     students = sData ? JSON.parse(sData) : [];
     logs = lData ? JSON.parse(lData) : [];
+
     if (uData) {
         users = JSON.parse(uData);
+        const adminUser = users.find((u) => u.username === 'admin');
+        if (adminUser) {
+            if (adminUser.role !== 'ADMIN') {
+                adminUser.role = 'ADMIN';
+                saveUsers();
+            }
+        } else {
+            users.push({ username: 'admin', password: 'admin123', role: 'ADMIN' });
+            saveUsers();
+        }
     } else {
         users = [{ username: 'admin', password: 'admin123', role: 'ADMIN' }];
         saveUsers();
@@ -72,8 +92,6 @@ function handleLogin(e) {
         logEvent('LOGIN', 'Success');
 
         if (err) err.classList.add('hidden');
-
-        // changed: use relative path so sessionStorage stays valid for the same origin/path
         window.location.href = 'portal.html';
     } else {
         logEvent('LOGIN', 'Failed - User: ' + uInput);
@@ -83,16 +101,13 @@ function handleLogin(e) {
 
 function handleLogout() {
     logEvent('LOGOUT', 'Success');
-    currentUser = null;
     sessionStorage.removeItem('sms_user');
-    document.getElementById('dashboard-section').classList.add('hidden-section');
-    document.getElementById('login-section').classList.remove('hidden-section');
-    document.getElementById('login-form').reset();
-    document.getElementById('login-error').classList.add('hidden');
+    currentUser = null;
+    window.location.href = 'login.html';
 }
 
 function initializeDashboard() {
-    document.getElementById('login-section').classList.add('hidden-section');
+    if (loginSection) loginSection.classList.add('hidden-section');
     document.getElementById('dashboard-section').classList.remove('hidden-section');
     document.getElementById('user-role-display').innerText = currentUser.role;
     document.getElementById('current-username').innerText = 'Logged in as: ' + currentUser.username;
