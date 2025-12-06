@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Student Management System</title>
+        <link rel="stylesheet" href="style.css" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+        <script src="script.js" defer></script>
+    </head>
+    <body>
+        <div id="dashboard-section" class="hidden-section">
+            <div id="sidebar">
+                <div class="sidebar-header">
+                    <i class="fas fa-university sidebar-logo"></i>
+                    <div>
+                        <h2>SMS Portal</h2>
+                        <p id="user-role-display">Admin</p>
+                    </div>
+                </div>
+                <nav class="sidebar-nav">
+                    <button onclick="switchView('view-students')" class="nav-btn nav-btn-active">
+                        <i class="fas fa-users"></i>
+                        <span>Students</span>
+                    </button>
+                    <button onclick="switchView('statistics')" class="nav-btn">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Statistics</span>
+                    </button>
+                    <div id="admin-links" class="hidden">
+                        <div class="sidebar-divider"></div>
+                        <p class="sidebar-section-title">Administration</p>
+                        <button onclick="switchView('manage-users')" class="nav-btn">
+                            <i class="fas fa-user-shield"></i>
+                            <span>Manage Users</span>
+                        </button>
+                        <button onclick="switchView('system-logs')" class="nav-btn">
+                            <i class="fas fa-list-alt"></i>
+                            <span>System Logs</span>
+                        </button>
+                    </div>
+                </nav>
+                <div class="sidebar-footer">
+                    <button
+                        onclick="backupData()"
+                        id="backup-btn"
+                        class="btn btn-secondary btn-block hidden"
+                    >
+                        <i class="fas fa-download"></i>
+                        <span>Backup Data</span>
+                    </button>
+                    <button onclick="handleLogout()" class="btn btn-danger btn-block">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                    <p id="current-username" class="sidebar-user">Logged in as: User</p>
+                </div>
+            </div>
+
+            <div id="main-content">
+                <header class="main-header">
+                    <h2 id="page-title">Student Records</h2>
+                    <div id="current-date" class="header-date"></div>
+                </header>
+
+                <main class="main-body">
+                    <div id="view-students" class="content-view">
+                        <div class="toolbar">
+                            <div class="toolbar-left">
+                                <div class="search-wrapper">
+                                    <span class="search-icon">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input
+                                        id="search-input"
+                                        onkeyup="handleSearch()"
+                                        type="text"
+                                        placeholder="Search by Name or Roll..."
+                                    />
+                                </div>
+                                <button onclick="toggleFilterMode()" class="btn btn-light icon-btn">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                            </div>
+                            <div class="toolbar-right">
+                                <select id="sort-select" onchange="handleSort()">
+                                    <option value="roll">Sort by Roll</option>
+                                    <option value="name">Sort by Name</option>
+                                    <option value="marks-desc">Marks (High-Low)</option>
+                                    <option value="marks-asc">Marks (Low-High)</option>
+                                </select>
+                                <button
+                                    id="add-student-btn"
+                                    onclick="openModal('student-modal')"
+                                    class="btn btn-primary hidden"
+                                >
+                                    <i class="fas fa-plus"></i>
+                                    <span>Add Student</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="advanced-filter" class="filter-panel hidden">
+                            <h4>Filter by Marks</h4>
+                            <div class="filter-controls">
+                                <input type="number" id="filter-min" placeholder="Min Marks" />
+                                <span>to</span>
+                                <input type="number" id="filter-max" placeholder="Max Marks" />
+                                <button
+                                    onclick="applyMarksFilter()"
+                                    class="btn btn-primary btn-small"
+                                >
+                                    Apply
+                                </button>
+                                <button onclick="resetFilters()" class="btn-link">Reset</button>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Roll No</th>
+                                        <th>Name</th>
+                                        <th>Marks</th>
+                                        <th>Grade</th>
+                                        <th class="text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="students-table-body"></tbody>
+                            </table>
+                            <div id="no-data-msg" class="no-data hidden">No records found.</div>
+                        </div>
+                    </div>
+
+                    <div id="statistics" class="content-view hidden-section">
+                        <div class="stats-grid">
+                            <div class="stat-card stat-blue">
+                                <p class="stat-title">TOTAL STUDENTS</p>
+                                <p id="stat-total" class="stat-value">0</p>
+                            </div>
+                            <div class="stat-card stat-green">
+                                <p class="stat-title">AVERAGE MARKS</p>
+                                <p id="stat-avg" class="stat-value">0</p>
+                            </div>
+                            <div class="stat-card stat-yellow">
+                                <p class="stat-title">HIGHEST SCORE</p>
+                                <p id="stat-high" class="stat-value">0</p>
+                            </div>
+                            <div class="stat-card stat-red">
+                                <p class="stat-title">LOWEST SCORE</p>
+                                <p id="stat-low" class="stat-value">0</p>
+                            </div>
+                        </div>
+                        <div class="stats-panel">
+                            <h3>Grade Distribution</h3>
+                            <div class="stats-panel-body">
+                                <div id="grade-bars" class="grade-bars"></div>
+                                <div class="grade-info">
+                                    Visual representation of student performance.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="manage-users" class="content-view hidden-section">
+                        <div class="users-header">
+                            <h3>System Users</h3>
+                            <button onclick="openModal('user-modal')" class="btn btn-success">
+                                <i class="fas fa-user-plus"></i>
+                                <span>Add User</span>
+                            </button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Role</th>
+                                        <th class="text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="system-logs" class="content-view hidden-section">
+                        <div class="log-panel">
+                            <h3>System Log File</h3>
+                            <div id="log-container" class="log-container"></div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <div id="student-modal" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 id="student-modal-title">Add Student</h3>
+                    <button onclick="closeModal('student-modal')" class="modal-close">
+                        &times;
+                    </button>
+                </div>
+                <form id="student-form" onsubmit="handleSaveStudent(event)" class="modal-body">
+                    <input type="hidden" id="edit-mode" value="false" />
+                    <div class="form-group">
+                        <label>Roll Number</label>
+                        <input type="text" id="s-roll" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="s-name" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Marks (0-100)</label>
+                        <input type="number" id="s-marks" min="0" max="100" step="0.01" required />
+                    </div>
+                    <div class="modal-footer">
+                        <button
+                            type="button"
+                            onclick="closeModal('student-modal')"
+                            class="btn btn-light"
+                        >
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">Save Student</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="user-modal" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>Add New User</h3>
+                    <button onclick="closeModal('user-modal')" class="modal-close">&times;</button>
+                </div>
+                <form onsubmit="handleAddUser(event)" class="modal-body">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="u-username" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="text" id="u-password" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="u-role">
+                            <option value="ADMIN">Admin</option>
+                            <option value="STAFF">Staff</option>
+                            <option value="USER">User</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button
+                            type="button"
+                            onclick="closeModal('user-modal')"
+                            class="btn btn-light"
+                        >
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success">Create User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="pwd-modal" class="modal-overlay hidden">
+            <div class="modal small-modal">
+                <div class="modal-body">
+                    <h3>Change Password</h3>
+                    <p class="pwd-text">Enter new password for <span id="pwd-username"></span></p>
+                    <input
+                        type="text"
+                        id="new-password-input"
+                        class="pwd-input"
+                        placeholder="New Password"
+                    />
+                    <div class="modal-footer">
+                        <button
+                            type="button"
+                            onclick="closeModal('pwd-modal')"
+                            class="btn btn-light"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onclick="confirmPasswordChange()"
+                            class="btn btn-primary"
+                        >
+                            Update
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
