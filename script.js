@@ -257,7 +257,9 @@ function handleSort() {
     const sorted = students.slice();
     if (criteria === 'roll') {
         sorted.sort(function (a, b) {
-            return a.roll.localeCompare(b.roll);
+            const numA = parseInt(a.roll.replace(/\D/g, ''));
+            const numB = parseInt(b.roll.replace(/\D/g, ''));
+            return numA - numB;
         });
     } else if (criteria === 'name') {
         sorted.sort(function (a, b) {
